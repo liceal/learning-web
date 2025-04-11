@@ -6,8 +6,15 @@
     <title>Document</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div style="border: 1px solid pink">
+      <button onclick="agePlusFn">age+1</button>
+    </div>
+    <div id="app">loading...</div>
     <script type="module">
+      function agePlusFn() {
+        state.age++;
+      }
+
       // 原生的
       // import {
       //   reactive,
