@@ -14,6 +14,27 @@ function preCleanEffect(effect) {
   effect._depsLength = 0; // 清除上一次的依赖情况
   effect._trackId++; // 让trackId自增，表示当前effect执行了几次
 }
+
+function postCleanEffect(effect) {
+  //[flag,age,xxx...] > [flag]
+  // 让effect和dep进行关联
+  if (effect.deps.length > effect._depsLength) {
+    for (let i = effect._depsLength; i < effect.deps.length; i++) {
+      const dep = effect.deps[i];
+      cleanDepEffect(dep, effect); // 删除当前的effect
+    }
+    effect.deps.length = effect._depsLength; // 更新依赖长度
+  }
+}
+
+function cleanDepEffect(dep, effect) {
+  // 删除当前的effect
+  dep.delete(effect);
+  // 如果没有依赖了，则清除deps
+  if (dep.size === 0) {
+    dep.cleanup(); // 如果已经清空了 会在depsMap里面删除自己
+  }
+}
 class ReactiveEffect {
   _trackId = 0; //用于记录当前effect执行了几次
   deps = []; // 用来存储当前effect依赖的属性
@@ -36,6 +57,7 @@ class ReactiveEffect {
 
       return this.fn();
     } finally {
+      postCleanEffect(this); // 清除上一次的依赖情况
       activeEffect = lastEffect; // 还原上一个effect
     }
   }
@@ -54,6 +76,7 @@ export function trackEffect(effect, dep) {
     if (oldDep !== dep) {
       if (oldDep) {
         // 删掉老的
+        cleanDepEffect(oldDep, effect);
       }
       // 换成新的
       effect.deps[effect._depsLength++] = dep; // 让effect和dep进行关联

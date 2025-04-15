@@ -6,6 +6,25 @@ function effect(fn, options) {
   _effect.run();
 }
 var activeEffect;
+function preCleanEffect(effect2) {
+  effect2._depsLength = 0;
+  effect2._trackId++;
+}
+function postCleanEffect(effect2) {
+  if (effect2.deps.length > effect2._depsLength) {
+    for (let i = effect2._depsLength; i < effect2.deps.length; i++) {
+      const dep = effect2.deps[i];
+      cleanDepEffect(dep, effect2);
+    }
+    effect2.deps.length = effect2._depsLength;
+  }
+}
+function cleanDepEffect(dep, effect2) {
+  dep.delete(effect2);
+  if (dep.size === 0) {
+    dep.cleanup();
+  }
+}
 var ReactiveEffect = class {
   //创建的effect是响应式的
   // fn用户编写的函数
@@ -28,15 +47,28 @@ var ReactiveEffect = class {
     let lastEffect = activeEffect;
     try {
       activeEffect = this;
+      preCleanEffect(this);
       return this.fn();
     } finally {
+      postCleanEffect(this);
       activeEffect = lastEffect;
     }
   }
 };
 function trackEffect(effect2, dep) {
   dep.set(effect2, effect2._trackId);
-  effect2.deps[effect2._depsLength++] = dep;
+  if (dep.get(effect2) !== effect2._trackId) {
+    dep.set(effect2, effect2._trackId);
+    let oldDep = effect2.deps[effect2._depsLength];
+    if (oldDep !== dep) {
+      if (oldDep) {
+        cleanDepEffect(oldDep, effect2);
+      }
+      effect2.deps[effect2._depsLength++] = dep;
+    } else {
+      effect2._depsLength++;
+    }
+  }
 }
 function triggerEffects(dep) {
   for (const effect2 of dep.keys()) {
