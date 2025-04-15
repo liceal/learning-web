@@ -5,7 +5,7 @@ import { mutableHandlers, ReactiveFlags } from "./baseHandler";
 const reactiveMap = new WeakMap();
 
 function createReactiveObject(target) {
-  if (isObject(target)) {
+  if (!isObject(target)) {
     return target;
   }
   // 如果是原始值，则直接返回 解决对代理对象进行重复代理的问题

@@ -7,13 +7,14 @@
   </head>
   <body>
     <div style="border: 1px solid pink">
-      <button onclick="agePlusFn">age+1</button>
+      <button onclick="agePlusFn()">age+1</button>
     </div>
     <div id="app">loading...</div>
     <script type="module">
-      function agePlusFn() {
+      window.agePlusFn = () => {
+        console.log(state);
         state.age++;
-      }
+      };
 
       // 原生的
       // import {
@@ -28,10 +29,13 @@
       const app = document.querySelector("#app");
 
       effect(() => {
-        app.innerHtml = `姓名${state.name} 年龄${state.age}`;
+        console.log("effect innherHtml");
+        app.innerHTML = `姓名${state.name} 年龄${state.age} 
+        <p>Date:${new Date().toString()}</p>`;
       });
 
       setTimeout(() => {
+        console.log(state);
         state.age++;
         console.log("state.age++", state.age);
       }, 1000);
